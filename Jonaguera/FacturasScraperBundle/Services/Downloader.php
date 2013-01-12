@@ -12,6 +12,8 @@
 
 namespace Jonaguera\FacturasScraperBundle\Services;
 
+use Symfony\Component\Finder\Finder;
+
 class Downloader {
 
     private $url;
@@ -31,7 +33,6 @@ class Downloader {
     }
 
     function Save() {
-
 
         $ch = curl_init();
 
@@ -59,13 +60,27 @@ class Downloader {
         $filename = $this->getFilenameFromHeaders();
 
         if ($filename) {
-            if (file_exists($this->ruta . "/" . $filename)) {
+            $i=0;
+            $finder = new Finder();
+            $finder->name($filename);
+            foreach ($finder->in($this->ruta) as $file) {
+                $i++;
+                echo "Encontrado el archivo ".$file->getFilename() . "\n";
+            }
+
+
+            if ($i>0) {
+                // Chequear si el documento existe
                 // Si existe
-                echo "El fichero " . $this->ruta . "/" . $filename . " existe. No se hace nada.\n";
+                echo "El fichero " . $filename . " existe. No se hace nada.\n";
             } else {
                 // Si no existe
-                echo "El fichero " . $this->ruta . "/" . $filename . " no existe. Se baja.\n";
-                $fp = fopen($this->ruta . "/" . $filename, 'w');
+                echo "El fichero " . $filename . " no existe. Se baja.\n";
+                
+                // Crear directorio destino
+                mkdir($this->ruta."/".date('Y')."/".date('m'), 0777, true);
+
+                $fp = fopen($this->ruta ."/".date('Y')."/".date('m'). "/" . $filename, 'w');
                 fwrite($fp, $output);
                 fclose($fp);
                 $message = \Swift_Message::newInstance()
@@ -96,13 +111,14 @@ class Downloader {
 
     private function getFilenameFromHeaders() {
         foreach ($this->headers as $header) {
-            if (stripos($header,"filename=")){
-                $filename=substr($header,stripos($header,"filename=")+9);
+            if (stripos($header, "filename=")) {
+                $filename = substr($header, stripos($header, "filename=") + 9);
                 // Quito dos caracteres salto línea al final
-                $filename=substr($filename, 0 , strlen($filename)-2);
+                $filename = substr($filename, 0, strlen($filename) - 2);
                 return $filename;
             }
         }
         return false;
     }
+
 }
