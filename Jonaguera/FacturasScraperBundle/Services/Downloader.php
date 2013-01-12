@@ -84,11 +84,11 @@ class Downloader {
                 fwrite($fp, $output);
                 fclose($fp);
                 $message = \Swift_Message::newInstance()
-                        ->setSubject('Factura de HC bajada')
+                        ->setSubject('Factura '.$filename.' bajada')
                         ->setFrom($this->sender)
                         ->setTo($this->recipient)
                         ->setBody(
-                        'Se ha descargado la factura ' . $filename
+                        'Se ha descargado la factura '. $filename.' en la ruta '.$this->ruta .'/'.date('Y').'/'.date('m').'/'
                         )
                 ;
                 $this->container->get('mailer')->send($message);
