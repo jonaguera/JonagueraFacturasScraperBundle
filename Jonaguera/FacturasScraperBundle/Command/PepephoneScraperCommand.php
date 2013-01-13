@@ -8,6 +8,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpKernel\Util\Filesystem;
+use Symfony\Component\DomCrawler\Crawler;
 use Jonaguera\FacturasScraperBundle\Services\Downloader;
 
 class PepephoneScraperCommand extends ContainerAwareCommand {
@@ -25,8 +26,8 @@ class PepephoneScraperCommand extends ContainerAwareCommand {
     }
 
     protected function execute(InputInterface $input, OutputInterface $output) {
-        
-        
+
+
         // Carga de variables desde parameters.ini
         $container = $this->getContainer();
         $this->headers = array();
@@ -36,7 +37,7 @@ class PepephoneScraperCommand extends ContainerAwareCommand {
         $this->sender = $this->getContainer()->getParameter('PpSender');
         $this->recipient = $this->getContainer()->getParameter('PpRecipient');
         $this->lineas = $this->getContainer()->getParameter('PpLinea');
-        
+
         $parameters = array(
             'p_email' => $this->username,
             'p_pwd' => $this->password,
@@ -66,12 +67,12 @@ class PepephoneScraperCommand extends ContainerAwareCommand {
         curl_close($ch);
         $xml = simplexml_load_string($output);
         $ses = $xml->attributes()->ses;
-        $url = 'https://www.pepephone.com/ppm_web/ppm_web/1/mipepephone2/xmipepephone.info.html?xres=C&xsid='.$ses;
-        
+        $url = 'https://www.pepephone.com/ppm_web/ppm_web/1/mipepephone2/xmipepephone.info.html?xres=C&xsid=' . $ses;
+
         /* PASO 1
          * Enviar página login
          */
-        
+
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1");
@@ -92,71 +93,54 @@ class PepephoneScraperCommand extends ContainerAwareCommand {
         /* PASO 2
          * Pedir página de facturas y parseo de últimas facturas (numero)
          */
-        foreach ($this->lineas as $linea){
-        $url = 'https://www.pepephone.com/ppm_web/ppm_web/1/mipepephone2/mislineas/vermas/xmipepephone.detalle_servicio.html?p_msisdn='.$linea.'&p_cabecera=N&p_numregfac=3&xsid='.$ses;
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1");
-        //Enviar cookie
-        curl_setopt($ch, CURLOPT_COOKIEFILE, $ckfile);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_VERBOSE, '0');
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, '0');
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, '0');
-        $output = curl_exec($ch);
-        curl_close($ch);
+        foreach ($this->lineas as $linea) {
+            // PAGINA ULTIMAS FACTURAS
+            $mespasado = strtotime('-1 month', strtotime(date('Y-m-d')));
+            $anno = date('Y', $mespasado);
+            $url = 'https://www.pepephone.com/ppm_web/ppm_web/1/mipepephone2/mislineas/vermas/otrasfacturas/cuerpo/xweb_factura_new.consulta_facturas2.html?p_msisdn=' . $linea . '&p_regini=1&p_ano=' . $anno . '&p_numreg=12&xsid=' . $ses;
 
-echo $output;
-die;
 
-        $output_lines = explode("\n", $output);
-        $b = preg_grep("/^.*javascript:ir_detalle_factura\(\'(.*)\'.*$/", $output_lines);
-        $fac = array();
-        foreach ($b as $linea_factura) {
-            preg_match('/ir_detalle_factura\(\'(.*)\',\'(.*)\',\'(.*)\',\'(.*)\'\)\;\"\>/', $linea_factura, $matches);
-            if (substr($matches[1], 1, 1) == "N") {
-                //G
-                $fac['G'][] = $matches;
-            } else if (substr($matches[1], 1, 1) == "H") {
-                //E
-                $fac['E'][] = $matches;
+
+            // PAGINA FACTURA
+            // 'https://www.pepephone.com/ppm_web2/ppm_web2/mipepephone/mislineas/consumo/factura?numfac='201190810822'.$numfactura.'&xsid='.$ses;
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1");
+            //Enviar cookie
+            curl_setopt($ch, CURLOPT_COOKIEFILE, $ckfile);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_VERBOSE, '0');
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, '0');
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, '0');
+            $output = curl_exec($ch);
+            curl_close($ch);
+
+            $crawler = new Crawler($output);
+            $crawler = $crawler->filter('div > div > a.lnkBlack');
+            $enlaces = array();
+            foreach ($crawler as $domElement) {
+                $enlaces[] = $domElement->getAttribute('href');
+            }
+            if (sizeof($enlaces) > 0) {
+                /* PASO 3
+                 * Peticion última factura Pepephone
+                 */
+                $downloader = new Downloader(
+                                'https://www.pepephone.com' . $enlaces[0],
+                                $ckfile,
+                                $this->ruta,
+                                $this->sender,
+                                $this->recipient,
+                                $container
+                );
+                $downloader->save();
+            } else {
+                echo "No hay facturas que comprobar para la línea ".$linea;
             }
         }
-        }
-        /* PASO 3
-         * Peticion última factura G
-         */
-        $num_factura = $fac['G'][0][1];
-        $anio = $fac['G'][0][2];
-
-        $downloader = new Downloader(
-                        $location . 'consulta.do?action=detalleFactura&anio=' . $anio . '&num_factura=' . $num_factura . '&original=-',
-                        $ckfile,
-                        $this->ruta,
-                        $this->sender,
-                        $this->recipient,
-                        $container
-        );
-        $downloader->save();
-
-        /* PASO 4
-         * Peticion última factura E
-         */
-        $num_factura = $fac['E'][0][1];
-        $anio = $fac['E'][0][2];
-
-        $downloader = new Downloader(
-                        $location . 'consulta.do?action=detalleFactura&anio=' . $anio . '&num_factura=' . $num_factura . '&original=-',
-                        $ckfile,
-                        $this->ruta,
-                        $this->sender,
-                        $this->recipient,
-                        $container
-        );
-        $downloader->save();
-
     }
 
     private function readHeader($ch, $header) {
