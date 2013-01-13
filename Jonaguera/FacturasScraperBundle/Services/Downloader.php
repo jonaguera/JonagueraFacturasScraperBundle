@@ -63,6 +63,7 @@ class Downloader {
             $i=0;
             $finder = new Finder();
             $finder->name($filename);
+            echo "Se va a comprobar la existencia de ".$filename." en ".$this->ruta."\n";
             foreach ($finder->in($this->ruta) as $file) {
                 $i++;
                 echo "Encontrado el archivo ".$file->getFilename() . "\n";
@@ -78,11 +79,13 @@ class Downloader {
                 echo "El fichero " . $filename . " no existe. Se baja.\n";
                 
                 // Crear directorio destino
-                mkdir($this->ruta."/".date('Y')."/".date('m'), 0777, true);
+                @mkdir($this->ruta."/".date('Y')."/".date('m'), 0777, true);
 
                 $fp = fopen($this->ruta ."/".date('Y')."/".date('m'). "/" . $filename, 'w');
                 fwrite($fp, $output);
                 fclose($fp);
+                chmod($this->ruta ."/".date('Y')."/".date('m'). "/" . $filename, 0777);
+
                 $message = \Swift_Message::newInstance()
                         ->setSubject('Factura '.$filename.' bajada')
                         ->setFrom($this->sender)
@@ -115,6 +118,16 @@ class Downloader {
                 $filename = substr($header, stripos($header, "filename=") + 9);
                 // Quito dos caracteres salto línea al final
                 $filename = substr($filename, 0, strlen($filename) - 2);
+                // Solo caracteres alfanumericos y guiones, puntos
+                $filename = preg_replace('/[^\da-z\-\.]/i', '', $filename);
+                // Pongo extension si no viene
+                if (!strpos($filename, '.')){
+                    foreach ($this->headers as $header) {
+                        if (strpos($header, 'application/pdf')){
+                            $filename = $filename.".pdf";
+                        }
+                    }
+                }
                 return $filename;
             }
         }
