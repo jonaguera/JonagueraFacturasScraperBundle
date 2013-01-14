@@ -1,7 +1,7 @@
 JonagueraFacturasScraperBundle
 ==============================
 
-Bundle Symfony2 para descargar facturas mediante Scraping. Por el momento funciona para descargar facturas de HC Energia y Ono.
+Bundle Symfony2 para descargar facturas mediante Scraping. Por el momento funciona para descargar facturas de HC Energia, Ono y Pepephone.
 
 Parametros app/config/parameters.ini
 ====================================
