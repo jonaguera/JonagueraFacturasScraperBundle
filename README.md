@@ -36,10 +36,10 @@ Incluir la línea
 app/config/config.yml
 =====================
 Para usar una cuenta de gmail para notificaciones
-swiftmailer:
-    transport: gmail
-    username:  %mailer_user%
-    password:  %mailer_password%
+    swiftmailer:
+        transport: gmail
+        username:  %mailer_user%
+        password:  %mailer_password%
 
 
 Dependencias
