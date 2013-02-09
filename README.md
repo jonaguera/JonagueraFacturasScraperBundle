@@ -30,16 +30,15 @@ Parametros app/config/parameters.ini
 
 app/AppKernel.php
 =================
-Incluir la línea
     new Jonaguera\FacturasScraperBundle\JonagueraFacturasScraperBundle(),
 
 app/config/config.yml
 =====================
-Para usar una cuenta de gmail para notificaciones
-    swiftmailer:
-        transport: gmail
-        username:  %mailer_user%
-        password:  %mailer_password%
+Seccion swiftmailer
+-------------------
+    transport: gmail
+    username:  %mailer_user%
+    password:  %mailer_password%
 
 
 Dependencias
