@@ -32,7 +32,7 @@ class Downloader {
         $this->container = $container;
     }
 
-    function Save() {
+    function save($filename = null) {
 
         $ch = curl_init();
 
@@ -57,8 +57,10 @@ class Downloader {
 
         // Mirar si el filename ya existe en el filesystem
         //Obtener el filename
-        $filename = $this->getFilenameFromHeaders();
-
+        if (!$filename){
+            $filename = $this->getFilenameFromHeaders();
+        }
+        
         if ($filename) {
             $i=0;
             $finder = new Finder();

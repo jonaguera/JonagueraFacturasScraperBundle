@@ -25,6 +25,12 @@ class PepephoneScraperCommand extends ContainerAwareCommand {
         ;
     }
 
+// @TODO: Valorar el scraping desde el XML, que puede ser más estable que el de la página web. Es el que utiliza la aplicación de pepephone
+// RUTAS XML
+// Hacer login
+// https://www.pepephone.com/ppm_web/ppm_web/1/xmd.login.xml?p_email=&p_pwd=&p_verapp=&p_veross=
+// Pagina ultimas facturas en XML
+// http://www.pepephone.com/ppm_web/ppm_web/1/xmd.lista_facturas.xml?p_msisdn=[NUMERP]&p_ano=[AÑO]&key=[SESSIONID]
     protected function execute(InputInterface $input, OutputInterface $output) {
 
 
@@ -128,19 +134,41 @@ class PepephoneScraperCommand extends ContainerAwareCommand {
                 /* PASO 3
                  * Peticion última factura Pepephone
                  */
+                $url = 'https://www.pepephone.com' . $enlaces[0];
                 $downloader = new Downloader(
-                                'https://www.pepephone.com' . $enlaces[0],
+                                $url,
                                 $ckfile,
                                 $this->ruta,
                                 $this->sender,
                                 $this->recipient,
                                 $container
                 );
-                $downloader->save();
+
+                // Pepephone ya no da nombre en la descarga, hay que forzarlo
+                $p_url = parse_url($url);
+                $p_query=$this->parse_query($p_url['query']);
+                $downloader->save($p_query['p_numfac'].'.pdf');
             } else {
-                echo "No hay facturas que comprobar para la línea ".$linea;
+                echo "No hay facturas que comprobar para la línea " . $linea;
             }
         }
+    }
+
+    private function parse_query($var) {
+        /**
+         *  Use this function to parse out the query array element from 
+         *  the output of parse_url(). 
+         */
+        $var = html_entity_decode($var);
+        $var = explode('&', $var);
+        $arr = array();
+
+        foreach ($var as $val) {
+            $x = explode('=', $val);
+            $arr[$x[0]] = $x[1];
+        }
+        unset($val, $x, $var);
+        return $arr;
     }
 
     private function readHeader($ch, $header) {
