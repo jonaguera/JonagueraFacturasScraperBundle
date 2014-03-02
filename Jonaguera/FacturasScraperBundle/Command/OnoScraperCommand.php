@@ -7,7 +7,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\HttpKernel\Util\Filesystem;
+use Symfony\Component\Filesystem\Filesystem;
 use Jonaguera\FacturasScraperBundle\Services\Downloader;
 
 class OnoScraperCommand extends ContainerAwareCommand {
@@ -30,7 +30,7 @@ class OnoScraperCommand extends ContainerAwareCommand {
         // Carga de variables desde parameters.ini
         $container = $this->getContainer();
         $this->headers = array();
-        $this->ruta = $this->getContainer()->getParameter('OnoPath');
+        $this->ruta = $this->getContainer()->getParameter('BasePath').$this->getContainer()->getParameter('OnoPath');
         $this->username = $this->getContainer()->getParameter('OnoUsername');
         $this->password = $this->getContainer()->getParameter('OnoPassword');
         $this->sender = $this->getContainer()->getParameter('OnoSender');

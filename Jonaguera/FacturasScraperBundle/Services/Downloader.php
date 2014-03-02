@@ -22,20 +22,21 @@ class Downloader {
     private $sender;
     private $recipient;
     private $container;
+    private $datefolders;
 
-    function __construct($url, $ckfile, $ruta, $sender, $recipient, $container) {
+    function __construct($url, $ckfile, $ruta, $sender, $recipient, $container,$datefolders=true) {
+        // $datefolders hace que se creen directorios en funcion de año y mes
         $this->url = $url;
         $this->ckfile = $ckfile;
         $this->ruta = $ruta;
         $this->sender = $sender;
         $this->recipient = $recipient;
         $this->container = $container;
+        $this->datefolders = $datefolders;
     }
 
     function save($filename = null) {
-
         $ch = curl_init();
-
         curl_setopt($ch, CURLOPT_URL, $this->url);
         curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1");
         // Enviar cookie
@@ -60,7 +61,7 @@ class Downloader {
         if (!$filename){
             $filename = $this->getFilenameFromHeaders();
         }
-        
+
         if ($filename) {
             $i=0;
             $finder = new Finder();
@@ -81,22 +82,33 @@ class Downloader {
                 echo "El fichero " . $filename . " no existe. Se baja.\n";
                 
                 // Crear directorio destino
-                @mkdir($this->ruta."/".date('Y')."/".date('m'), 0777, true);
+                if($this->datefolders){
+                    $this->ruta=$this->ruta."/".date('Y')."/".date('m');
+                }
 
-                $fp = fopen($this->ruta ."/".date('Y')."/".date('m'). "/" . $filename, 'w');
+                if (!file_exists($this->ruta)){
+                    mkdir($this->ruta, 0777, true);
+                }
+
+                $fp = fopen($this->ruta. "/" . $filename.".tmp", 'w');
                 fwrite($fp, $output);
                 fclose($fp);
-                chmod($this->ruta ."/".date('Y')."/".date('m'). "/" . $filename, 0777);
+                chmod($this->ruta . "/" . $filename.".tmp", 0777);
+                rename ( $this->ruta . "/" . $filename.".tmp",$this->ruta . "/" . $filename );
 
-                $message = \Swift_Message::newInstance()
-                        ->setSubject('Factura '.$filename.' bajada')
-                        ->setFrom($this->sender)
-                        ->setTo($this->recipient)
-                        ->setBody(
-                        'Se ha descargado la factura '. $filename.' en la ruta '.$this->ruta .'/'.date('Y').'/'.date('m').'/'
-                        )
-                ;
-                $this->container->get('mailer')->send($message);
+                if ($this->recipient){
+                    echo "Se envia mail a " . print_r($this->recipient,1) . ".\n";
+                    $message = \Swift_Message::newInstance()
+                            ->setSubject('Factura '.$filename.' disponible')
+                            ->setFrom($this->sender)
+                            ->setTo($this->recipient)
+                            ->attach(\Swift_Attachment::fromPath($this->ruta . "/" . $filename))
+                            ->setBody(
+                            'Se ha descargado la factura '. $filename.' en la ruta '.$this->ruta .'/'
+                            )
+                    ;
+                    $this->container->get('mailer')->send($message);
+                }
             }
         } else {
             // No se devuelve un archivo
