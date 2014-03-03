@@ -22,8 +22,13 @@ Parametros app/config/parameters.ini
     PpSender   
     PpRecipient     
     PpPath         
-    PpLinea[]
-    PpLinea[]  
+    PpNumFacturas
+
+    SomUsername
+    SomPassword
+    SomSender
+    SomRecipient
+    SomPath
 
     mailer_user    
     mailer_password
@@ -44,3 +49,5 @@ Seccion swiftmailer
 Dependencias
 ============
     php5_curl
+    "fabpot/goutte": "1.0.*@dev"
+

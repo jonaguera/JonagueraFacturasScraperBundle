@@ -24,7 +24,7 @@ class Downloader {
     private $container;
     private $datefolders;
 
-    function __construct($url, $ckfile, $ruta, $sender, $recipient, $container,$datefolders=true) {
+    function __construct($url, $ckfile, $ruta, $sender, $recipient, $container,$datefolders=true,$parsepdf = false) {
         // $datefolders hace que se creen directorios en funcion de año y mes
         $this->url = $url;
         $this->ckfile = $ckfile;
@@ -33,6 +33,7 @@ class Downloader {
         $this->recipient = $recipient;
         $this->container = $container;
         $this->datefolders = $datefolders;
+        $this->parsepdf = $parsepdf;
     }
 
     function save($filename = null) {
@@ -96,6 +97,15 @@ class Downloader {
                 chmod($this->ruta . "/" . $filename.".tmp", 0777);
                 rename ( $this->ruta . "/" . $filename.".tmp",$this->ruta . "/" . $filename );
 
+
+                // Obtener el total
+                if ($this->parsepdf){
+                    $parser = new PdfParser($this->ruta . "/" . $filename);
+                    $total_factura = "\nEl importe de la factura es: ".$parser->readInvoiceTotal();
+                } else {
+                    $total_factura = "";
+                }
+
                 if ($this->recipient){
                     echo "Se envia mail a " . print_r($this->recipient,1) . ".\n";
                     $message = \Swift_Message::newInstance()
@@ -104,7 +114,7 @@ class Downloader {
                             ->setTo($this->recipient)
                             ->attach(\Swift_Attachment::fromPath($this->ruta . "/" . $filename))
                             ->setBody(
-                            'Se ha descargado la factura '. $filename.' en la ruta '.$this->ruta .'/'
+                            "Se ha descargado la factura ". $filename." en la ruta ".$this->ruta .$total_factura
                             )
                     ;
                     $this->container->get('mailer')->send($message);

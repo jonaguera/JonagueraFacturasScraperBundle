@@ -85,7 +85,10 @@ class OnoScraperCommand extends ContainerAwareCommand {
                         $this->ruta,
                         $this->sender,
                         $this->recipient,
-                        $container
+                        $container,
+                        $this->getContainer()->getParameter('OnoDateFolders'),
+                        $this->getContainer()->getParameter('OnoParsePdf')
+
         );
         $downloader->save();
  

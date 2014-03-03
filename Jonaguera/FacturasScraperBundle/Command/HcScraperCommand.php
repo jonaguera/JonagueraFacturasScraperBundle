@@ -162,7 +162,9 @@ class HcScraperCommand extends ContainerAwareCommand {
             $this->ruta,
             $this->sender,
             $this->recipient,
-            $container
+            $container,
+            $this->getContainer()->getParameter('HcDateFolders'),
+            $this->getContainer()->getParameter('HcParsePdf')
         );
         $downloader->save();
 

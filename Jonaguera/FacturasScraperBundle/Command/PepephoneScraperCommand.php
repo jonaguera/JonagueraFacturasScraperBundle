@@ -152,7 +152,10 @@ class PepephoneScraperCommand extends ContainerAwareCommand {
                                 $this->ruta,
                                 $this->sender,
                                 $this->recipient,
-                                $container
+                                $container,
+                                $this->getContainer()->getParameter('PpDateFolders'),
+                                $this->getContainer()->getParameter('PpParsePdf')
+
                 );
 
                 // Pepephone ya no da nombre en la descarga, hay que forzarlo
