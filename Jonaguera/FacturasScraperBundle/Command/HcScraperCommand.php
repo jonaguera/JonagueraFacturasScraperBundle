@@ -47,11 +47,6 @@ class HcScraperCommand extends ContainerAwareCommand {
         $ckfile = tempnam("/var/services/tmp", "CURLCOOKIE");
 
 
-
-
-
-
-
         /* PASO 0
          * Enviar página login (la obtengo parseando el resultado de la página para ver el redirect en la respuesta html
          */
@@ -81,24 +76,6 @@ class HcScraperCommand extends ContainerAwareCommand {
             $location = $href->getAttribute('href');
             break;
         }
-
-
-        /* PASO 0
-         * Obtener página de login
-         */
-        /** NO FUNCIONA EN SYNOLOGY
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_URL, 'https://www.hcenergia.com/webclientes/');
-        curl_setopt($ch, CURLOPT_VERBOSE, '0');
-        curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1");
-        curl_setopt($ch, CURLOPT_HEADERFUNCTION, array($this, 'readHeader'));
-        $output = curl_exec($ch);
-        curl_close($ch);
-        echo($output."\n");
-        $location = $this->getLocationFromHeaders();
-         */
-
 
         /* PASO 1
          * Enviar página login
@@ -185,30 +162,5 @@ class HcScraperCommand extends ContainerAwareCommand {
         $downloader->save();
 
     }
-
-    private function readHeader($ch, $header) {
-        $this->headers[] = $header;
-        return strlen($header);
-    }
-
-    private function getLocationFromHeaders() {
-        print_r($this->headers);
-        foreach ($this->headers as $header) {
-            if (substr($header, 0, 10) == 'Location: ') {
-                return substr($header, 10, strlen($header) - 12);
-            }
-        }
-        return false;
-    }
-
-    private function getFilenameFromHeaders() {
-        foreach ($this->headers as $header) {
-            if (strcasecmp(substr($header, 0, 42), 'Content-Disposition: attachment; filename=') == 0) {
-                return substr($header, 42, strlen($header) - 44);
-            }
-        }
-        return false;
-    }
-
 }
 

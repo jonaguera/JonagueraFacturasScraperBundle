@@ -185,29 +185,5 @@ class PepephoneScraperCommand extends ContainerAwareCommand {
         unset($val, $x, $var);
         return $arr;
     }
-
-    private function readHeader($ch, $header) {
-        $this->headers[] = $header;
-        return strlen($header);
-    }
-
-    private function getLocationFromHeaders() {
-        foreach ($this->headers as $header) {
-            if (substr($header, 0, 10) == 'Location: ') {
-                return substr($header, 10, strlen($header) - 12);
-            }
-        }
-        return false;
-    }
-
-    private function getFilenameFromHeaders() {
-        foreach ($this->headers as $header) {
-            if (strcasecmp(substr($header, 0, 42), 'Content-Disposition: attachment; filename=') == 0) {
-                return substr($header, 42, strlen($header) - 44);
-            }
-        }
-        return false;
-    }
-
 }
 
