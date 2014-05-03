@@ -53,7 +53,7 @@ class PepephoneScraperCommand extends ContainerAwareCommand {
         );
 
         $fields_string = http_build_query($parameters);
-        $ckfile = tempnam("/tmp", "CURLCOOKIE");
+        $ckfile = tempnam("/var/services/tmp", "CURLCOOKIE");
 
         /* PASO 0
          * Obtener id sesion y montar url login

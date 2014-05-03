@@ -44,7 +44,7 @@ class HcScraperCommand extends ContainerAwareCommand {
         );
 
         $fields_string = http_build_query($parameters);
-        $ckfile = tempnam("/tmp", "CURLCOOKIE");
+        $ckfile = tempnam("/var/services/tmp", "CURLCOOKIE");
 
 
 

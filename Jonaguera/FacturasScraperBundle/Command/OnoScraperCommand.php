@@ -37,7 +37,7 @@ class OnoScraperCommand extends ContainerAwareCommand {
         $this->recipient = $this->getContainer()->getParameter('OnoRecipient');
         $parameters = array('idClientehidden' => '', 'user_username' => $this->username, 'user_password' => $this->password, 'answer' => '');
         $fields_string = http_build_query($parameters);
-        $ckfile = tempnam("/tmp", "CURLCOOKIE");
+        $ckfile = tempnam("/var/services/tmp", "CURLCOOKIE");
 
         /* PASO 1
          * Visitar página que sirve la cookie (login)
